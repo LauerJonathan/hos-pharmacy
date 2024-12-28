@@ -1,0 +1,101 @@
+{
+    "medications": [
+      {
+        "id": "M001",
+        "name": "Paracetamol",
+        "form": "Tablet",
+        "dose": "500mg",
+        "stock_quantity": 200,
+        "minimum_quantity": 50,
+        "expiration_date": "2025-06-15",
+        "manufacturer": "Laboratory X",
+        "indication": "Mild to moderate pain, fever",
+        "contraindication": "Severe liver failure",
+        "prescription_required": true,
+        "category": "Analgesics",
+        "unit_price": 2.5,
+        "unit": "tablet",
+        "cip_code": "1234567890123",
+        "low_stock_alert": false
+      },
+      {
+        "id": "M002",
+        "name": "Ibuprofen",
+        "form": "Capsule",
+        "dose": "200mg",
+        "stock_quantity": 150,
+        "minimum_quantity": 30,
+        "expiration_date": "2024-11-20",
+        "manufacturer": "Laboratory Y",
+        "indication": "Moderate pain, inflammation",
+        "contraindication": "History of gastric ulcers",
+        "prescription_required": true,
+        "category": "Anti-inflammatory",
+        "unit_price": 1.8,
+        "unit": "capsule",
+        "cip_code": "9876543210987",
+        "low_stock_alert": true
+      },
+      {
+        "id": "M003",
+        "name": "Amoxicillin",
+        "form": "Oral Suspension",
+        "dose": "250mg/5ml",
+        "stock_quantity": 500,
+        "minimum_quantity": 100,
+        "expiration_date": "2026-01-10",
+        "manufacturer": "Laboratory Z",
+        "indication": "Bacterial infections",
+        "contraindication": "Penicillin allergy",
+        "prescription_required": true,
+        "category": "Antibiotics",
+        "unit_price": 3.0,
+        "unit": "ml",
+        "cip_code": "1122334455667",
+        "low_stock_alert": false
+      },
+      {
+        "id": "M004",
+        "name": "Salbutamol",
+        "form": "Inhaler",
+        "dose": "100mcg",
+        "stock_quantity": 120,
+        "minimum_quantity": 30,
+        "expiration_date": "2025-09-12",
+        "manufacturer": "Laboratory W",
+        "indication": "Asthma, bronchospasms",
+        "contraindication": "Hypersensitivity to salbutamol",
+        "prescription_required": true,
+        "category": "Bronchodilators",
+        "unit_price": 6.5,
+        "unit": "inhaler",
+        "cip_code": "3344556677889",
+        "low_stock_alert": false
+      }
+    ],
+    "order_history": [
+      {
+        "order_id": "C001",
+        "date": "2024-12-10",
+        "medication_id": "M001",
+        "ordered_quantity": 100,
+        "supplier": "Supplier A",
+        "status": "Delivered"
+      },
+      {
+        "order_id": "C002",
+        "date": "2024-12-12",
+        "medication_id": "M002",
+        "ordered_quantity": 50,
+        "supplier": "Supplier B",
+        "status": "Pending"
+      }
+    ],
+    "stock_reports": {
+      "total_medications": 4,
+      "medications_with_alert": 1,
+      "total_stock_quantity": 970,
+      "critical_stock_quantity": 80
+    }
+  }
+  
