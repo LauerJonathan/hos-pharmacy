@@ -15,7 +15,6 @@ const medicationSchema = new mongoose.Schema({
   dose: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
   },
   stock_quantity: {

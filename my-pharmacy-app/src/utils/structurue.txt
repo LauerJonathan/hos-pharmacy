@@ -1,0 +1,36 @@
+src/
+├── components/
+│   ├── auth/
+│   │   ├── LoginForm.jsx        # Formulaire de connexion
+│   │   ├── RegisterForm.jsx     # Formulaire d'inscription
+│   │   └── ProtectedRoute.jsx   # Composant de protection des routes
+│   └── ui/                      # Composants UI réutilisables
+│       ├── alert.jsx
+│       ├── button.jsx
+│       ├── card.jsx
+│       ├── input.jsx
+│       └── select.jsx
+│
+├── store/                       # Configuration Redux
+│   ├── store.js                # Configuration du store Redux
+│   ├── api/
+│   │   └── apiSlice.js         # Configuration axios et intercepteurs
+│   └── features/
+│       └── auth/
+│           ├── authSlice.js    # Reducer et actions d'authentification
+│           └── authThunks.js   # Thunks pour les appels API d'auth
+│
+├── utils/                      # Fonctions utilitaires
+│   └── authUtils.js            # Utilitaires pour l'authentification
+│
+├── layouts/                    # Layouts réutilisables
+│   └── MainLayout.jsx          # Layout principal avec header
+│
+├── pages/                      # Pages de l'application
+│   ├── DashboardPage.jsx       # Page tableau de bord
+│   └── UnauthorizedPage.jsx    # Page d'accès non autorisé
+│
+├── App.jsx                     # Composant racine avec les routes
+├── main.jsx                    # Point d'entrée de l'application
+├── index.css                   # Styles globaux
+└── vite.config.js             # Configuration de Vite avec proxy

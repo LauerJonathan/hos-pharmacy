@@ -5,56 +5,64 @@ import RegisterForm from "@/components/auth/RegisterForm";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import UnauthorizedPage from "@/pages/UnauthorizedPage";
 import DashboardPage from "@/pages/DashboardPage";
+import AddMedicationPage from "./pages/AddMedicationPage";
 import MainLayout from "@/layouts/MainLayout";
 import "./App.css";
 
 const App = () => {
   return (
-      <BrowserRouter>
-        <Routes>
-          {/* Routes publiques */}
-          <Route path="/login" element={<LoginForm />} />
+    <BrowserRouter>
+      <Routes>
+        {/* Routes publiques */}
+        <Route path="/login" element={<LoginForm />} />
 
-          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-          {/* Routes protégées */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Navigate to="/dashboard" replace />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+        {/* Routes protégées */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Navigate to="/dashboard" replace />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <DashboardPage />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <DashboardPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
 
-          <Route
-            path="/register"
-            element={
-              <ProtectedRoute roles={["admin"]}>
-                <MainLayout>
-                  <RegisterForm />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Route 404 */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </BrowserRouter>
+        <Route
+          path="/register"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <MainLayout>
+                <RegisterForm />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-medication"
+          element={
+            <ProtectedRoute roles={["pharmacien"]}>
+              <AddMedicationPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Route 404 */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
