@@ -8,6 +8,7 @@ import DashboardPage from "@/pages/DashboardPage";
 import AddMedicationPage from "./pages/AddMedicationPage";
 import MainLayout from "@/layouts/MainLayout";
 import "./App.css";
+import MedicationsPage from "./pages/MedicationsPage";
 
 const App = () => {
   return (
@@ -56,6 +57,14 @@ const App = () => {
           element={
             <ProtectedRoute roles={["pharmacien"]}>
               <AddMedicationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock"
+          element={
+            <ProtectedRoute roles={["pharmacien"]}>
+              <MedicationsPage />
             </ProtectedRoute>
           }
         />

@@ -30,10 +30,25 @@ const medicationSlice = createSlice({
       state.error = null;
       state.success = null;
     },
+    setMedications: (state, action) => {
+      state.medications = action.payload;
+    },
   },
 });
 
-export const { setLoading, setError, setSuccess, addMedication, resetStatus } =
-  medicationSlice.actions;
+export const {
+  setLoading,
+  setError,
+  setSuccess,
+  addMedication,
+  resetStatus,
+  setMedications,
+} = medicationSlice.actions;
+
+// Selectors
+export const selectAllMedications = (state) => state.medications.medications;
+export const selectMedicationsLoading = (state) => state.medications.loading;
+export const selectMedicationsError = (state) => state.medications.error;
+export const selectMedicationsSuccess = (state) => state.medications.success;
 
 export default medicationSlice.reducer;

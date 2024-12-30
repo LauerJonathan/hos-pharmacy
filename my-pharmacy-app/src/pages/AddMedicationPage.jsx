@@ -1,4 +1,4 @@
-import MedicationForm from "../components/pharmacien/MedicationForm";
+import MedicationForm from "../components/medications/MedicationForm";
 
 const AddMedicationPage = () => {
   return (
