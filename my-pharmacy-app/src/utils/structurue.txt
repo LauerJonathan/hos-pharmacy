@@ -1,36 +1,44 @@
 src/
-├── components/
-│   ├── auth/
-│   │   ├── LoginForm.jsx        # Formulaire de connexion
-│   │   ├── RegisterForm.jsx     # Formulaire d'inscription
-│   │   └── ProtectedRoute.jsx   # Composant de protection des routes
-│   └── ui/                      # Composants UI réutilisables
-│       ├── alert.jsx
-│       ├── button.jsx
-│       ├── card.jsx
-│       ├── input.jsx
-│       └── select.jsx
+├── api/                      # Appels API et configuration axios
+│   ├── axios.config.js
+│   └── endpoints.js
 │
-├── store/                       # Configuration Redux
-│   ├── store.js                # Configuration du store Redux
-│   ├── api/
-│   │   └── apiSlice.js         # Configuration axios et intercepteurs
-│   └── features/
-│       └── auth/
-│           ├── authSlice.js    # Reducer et actions d'authentification
-│           └── authThunks.js   # Thunks pour les appels API d'auth
+├── assets/                   # Images, fonts et autres ressources statiques
+│   └── images/
 │
-├── utils/                      # Fonctions utilitaires
-│   └── authUtils.js            # Utilitaires pour l'authentification
+├── components/              
+│   ├── ui/                   # Composants UI génériques (shadcn)
+│   │   ├── button.jsx
+│   │   ├── input.jsx
+│   │   └── card.jsx
+│   │
+│   └── medications/          # Composants spécifiques aux médicaments
+│       ├── MedicationCard.jsx
+│       ├── MedicationFilters.jsx
+│       ├── MedicationStats.jsx
+│       ├── RestockButton.jsx
+│       └── RestockContext.jsx
 │
-├── layouts/                    # Layouts réutilisables
-│   └── MainLayout.jsx          # Layout principal avec header
+├── layouts/                  # Composants de mise en page
+│   ├── Header.jsx
+│   └── Sidebar.jsx
 │
-├── pages/                      # Pages de l'application
-│   ├── DashboardPage.jsx       # Page tableau de bord
-│   └── UnauthorizedPage.jsx    # Page d'accès non autorisé
+├── pages/                    # Pages de l'application
+│   ├── MedicationsPage.jsx
+│   └── DashboardPage.jsx
 │
-├── App.jsx                     # Composant racine avec les routes
-├── main.jsx                    # Point d'entrée de l'application
-├── index.css                   # Styles globaux
-└── vite.config.js             # Configuration de Vite avec proxy
+├── store/                    # Configuration Redux
+│   ├── index.js             # Store configuration
+│   └── features/            # Features Redux (slices)
+│       └── medications/
+│           ├── medicationSlice.js
+│           └── medicationThunks.js
+│
+├── styles/                   # Styles globaux
+│   └── globals.css
+│
+├── utils/                    # Fonctions utilitaires
+│   ├── date.js
+│   └── formatters.js
+│
+└── App.jsx                   # Point d'entrée de l'application

@@ -1,4 +1,3 @@
-// src/pages/MedicationsPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMedications } from "../store/features/medications/medicationThunks";
@@ -11,6 +10,7 @@ import {
 import MedicationCard from "../components/medications/MedicationCard";
 import MedicationStats from "../components/medications/MedicationStats";
 import MedicationFilters from "../components/medications/MedicationFilters";
+import { RestockProvider } from "../components/medications/RestockContext";
 import Header from "../layouts/Header";
 import { Alert } from "../components/ui/alert";
 
@@ -77,6 +77,12 @@ const MedicationsPage = () => {
     return result;
   }, [medications, searchTerm, sortBy]);
 
+  // Gestionnaire de réapprovisionnement
+  const handleRestock = (medicationId, { currentStock, minQuantity }) => {
+    // Ici vous pourrez dispatcher l'action Redux pour mettre à jour le stock
+    console.log('Mise à jour du stock:', { medicationId, currentStock, minQuantity });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header showBackButton={true} />
@@ -123,12 +129,18 @@ const MedicationsPage = () => {
           </div>
         )}
 
-        {/* Grille de médicaments */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredMedications.map((medication) => (
-            <MedicationCard key={medication.id} medication={medication} />
-          ))}
-        </div>
+        {/* Grille de médicaments avec RestockProvider */}
+        <RestockProvider>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredMedications.map((medication) => (
+              <MedicationCard 
+                key={medication.id} 
+                medication={medication}
+                onRestock={handleRestock}
+              />
+            ))}
+          </div>
+        </RestockProvider>
       </main>
     </div>
   );
