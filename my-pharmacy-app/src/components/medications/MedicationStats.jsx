@@ -1,4 +1,3 @@
-// src/components/medications/MedicationStats.jsx
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMedications } from "../../store/features/medications/medicationThunks";
@@ -15,11 +14,21 @@ const MedicationStats = () => {
 
   const stats = {
     total: medications.length,
-    lowStock: medications.filter((med) => med.currentStock <= med.minQuantity)
-      .length,
-    expired: medications.filter(
-      (med) => new Date(med.expirationDate) < new Date()
-    ).length,
+    lowStock: medications.filter((med) => med.stockStatus === "low").length,
+    expiredLots: {
+      count: medications.reduce(
+        (acc, med) => acc + med.lots.filter((lot) => lot.isExpired).length,
+        0
+      ),
+      units: medications.reduce(
+        (acc, med) =>
+          acc +
+          med.lots
+            .filter((lot) => lot.isExpired)
+            .reduce((sum, lot) => sum + lot.quantity, 0),
+        0
+      ),
+    },
   };
 
   return (
@@ -40,12 +49,12 @@ const MedicationStats = () => {
         </CardContent>
       </Card>
 
-      <Card className={stats.expired > 0 ? "bg-yellow-50" : ""}>
+      <Card className={stats.expiredLots.count > 0 ? "bg-orange-50" : ""}>
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-yellow-600">
-            {stats.expired}
+          <div className="text-2xl font-bold text-orange-600">
+            {stats.expiredLots.count} lot(s)
           </div>
-          <p className="text-sm text-yellow-600">Médicaments Expirés</p>
+          <p className="text-sm text-orange-600">Expirés</p>
         </CardContent>
       </Card>
     </div>

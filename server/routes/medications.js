@@ -31,7 +31,9 @@ router.get("/", authMiddleware, async (req, res) => {
   try {
     const medications = await Medication.find({})
       .populate("lots")
-      .select("medName form dose minimum_quantity lots prescription_required")
+      .select(
+        "medName form dose minimum_quantity lots prescription_required cip13"
+      )
       .sort({ medName: 1 });
 
     const now = new Date();
@@ -53,6 +55,7 @@ router.get("/", authMiddleware, async (req, res) => {
         isExpired: new Date(lot.expiration_date) < now,
       })),
       prescriptionRequired: med.prescription_required,
+      cip13: med.cip13,
       stockStatus:
         med.lots.reduce(
           (sum, lot) =>

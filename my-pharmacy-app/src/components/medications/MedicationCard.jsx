@@ -5,8 +5,18 @@ import { ClipboardList, Settings2 } from "lucide-react";
 import RestockButton from "./RestockButton";
 
 const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
-  const isLowStock = medication.currentStock <= medication.minQuantity;
-  const isExpired = new Date(medication.expirationDate) < new Date();
+  const isLowStock = medication.stockStatus === "low";
+  const expiredLot = medication.lots
+    .filter((lot) => lot.isExpired)
+    .sort((a, b) => new Date(b.expirationDate) - new Date(a.expirationDate))[0];
+  const nextExpirationDate =
+    expiredLot?.expirationDate ||
+    medication.lots
+      .filter((lot) => !lot.isExpired)
+      .sort(
+        (a, b) => new Date(a.expirationDate) - new Date(b.expirationDate)
+      )[0]?.expirationDate;
+
   const stockRatio = Math.min(
     (medication.currentStock /
       Math.max(medication.minQuantity * 2, medication.currentStock)) *
@@ -15,8 +25,20 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
   );
 
   return (
-    <Card className="w-full p-6 space-y-4">
-      {/* En-tête avec le nom et la forme */}
+    <Card className="w-full p-6 space-y-4 relative">
+      <div className="absolute top-2 right-2 flex gap-2">
+        {expiredLot && (
+          <div className="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold bg-orange-500 text-white">
+            Périmé
+          </div>
+        )}
+        {isLowStock && (
+          <div className="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold bg-red-500 text-white">
+            Stock bas
+          </div>
+        )}
+      </div>
+
       <div>
         <h3 className="text-xl font-semibold text-gray-900">
           {medication.name}
@@ -26,7 +48,6 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
         </p>
       </div>
 
-      {/* Informations sur le stock */}
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <span className="text-gray-500">Stock actuel</span>
@@ -45,22 +66,23 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
           </span>
         </div>
 
-        <div className="flex justify-between items-center">
-          <span className="text-gray-500">Date d'expiration</span>
-          <span
-            className={`font-semibold ${
-              isExpired ? "text-orange-600" : "text-gray-900"
-            }`}>
-            {new Date(medication.expirationDate).toLocaleDateString("fr-FR", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}
-          </span>
-        </div>
+        {nextExpirationDate && (
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500">Date d'expiration</span>
+            <span
+              className={`font-semibold ${
+                expiredLot ? "text-orange-600" : "text-gray-900"
+              }`}>
+              {new Date(nextExpirationDate).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Barre de progression du stock */}
       <div>
         <div className="w-full bg-gray-100 rounded-full h-2">
           <div
@@ -72,7 +94,6 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
         </div>
       </div>
 
-      {/* Boutons d'action */}
       <div className="flex justify-center gap-4 relative">
         <RestockButton
           medication={medication}
@@ -91,10 +112,10 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
 
         <Button
           onClick={() => onEdit(medication.id)}
-          variant={isExpired ? "default" : "outline"}
+          variant={expiredLot ? "default" : "outline"}
           size="icon"
           className={`w-10 h-10 transition-colors duration-200 ${
-            isExpired
+            expiredLot
               ? "bg-orange-600 hover:bg-orange-700 text-white"
               : "hover:bg-gray-100"
           }`}

@@ -17,23 +17,33 @@ import { Alert } from "../components/ui/alert";
 const MedicationsPage = () => {
   const dispatch = useDispatch();
   const medications = useSelector(selectAllMedications);
+  console.log('Medications from Redux:', medications);
+
   const loading = useSelector(selectMedicationsLoading);
   const error = useSelector(selectMedicationsError);
   const success = useSelector(selectMedicationsSuccess);
 
-  // État local pour les filtres
   const [searchTerm, setSearchTerm] = useState("");
+  const [cip13SearchTerm, setCip13SearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name-asc");
 
   useEffect(() => {
     dispatch(fetchMedications());
   }, [dispatch]);
 
-  // Filtrage et tri des médicaments
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    if (cip13SearchTerm) setCip13SearchTerm("");
+  };
+
+  const handleCip13SearchChange = (value) => {
+    setCip13SearchTerm(value);
+    if (searchTerm) setSearchTerm("");
+  };
+
   const filteredMedications = useMemo(() => {
     let result = [...medications];
 
-    // Filtrage par recherche
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       result = result.filter(
@@ -44,7 +54,15 @@ const MedicationsPage = () => {
       );
     }
 
-    // Tri
+    if (cip13SearchTerm) {
+      result = result.filter((med) => {
+        if (!med.cip13) return false;
+        const medCip = med.cip13.toString();
+        const searchCip = cip13SearchTerm.toString().replace(/^0+/, '');
+        return medCip.includes(searchCip);
+      });
+    }
+
     switch (sortBy) {
       case "name-asc":
         result.sort((a, b) => a.name.localeCompare(b.name));
@@ -59,14 +77,28 @@ const MedicationsPage = () => {
         result.sort((a, b) => b.currentStock - a.currentStock);
         break;
       case "expiration":
-        result.sort(
-          (a, b) => new Date(a.expirationDate) - new Date(b.expirationDate)
-        );
+        result.sort((a, b) => {
+          const aDate = a.lots.reduce((earliest, lot) => {
+            if (!lot.isExpired) {
+              const lotDate = new Date(lot.expirationDate);
+              return !earliest || lotDate < earliest ? lotDate : earliest;
+            }
+            return earliest;
+          }, null);
+          const bDate = b.lots.reduce((earliest, lot) => {
+            if (!lot.isExpired) {
+              const lotDate = new Date(lot.expirationDate);
+              return !earliest || lotDate < earliest ? lotDate : earliest;
+            }
+            return earliest;
+          }, null);
+          return aDate - bDate;
+        });
         break;
       case "low-stock":
         result.sort((a, b) => {
-          const aIsLow = a.currentStock <= a.minQuantity;
-          const bIsLow = b.currentStock <= b.minQuantity;
+          const aIsLow = a.stockStatus === "low";
+          const bIsLow = b.stockStatus === "low";
           return bIsLow - aIsLow;
         });
         break;
@@ -75,38 +107,34 @@ const MedicationsPage = () => {
     }
 
     return result;
-  }, [medications, searchTerm, sortBy]);
+  }, [medications, searchTerm, cip13SearchTerm, sortBy]);
 
-  // Gestionnaire de réapprovisionnement
   const handleRestock = (medicationId, { currentStock, minQuantity }) => {
-    // Ici vous pourrez dispatcher l'action Redux pour mettre à jour le stock
-    console.log('Mise à jour du stock:', { medicationId, currentStock, minQuantity });
+    console.log("Mise à jour du stock:", { medicationId, currentStock, minQuantity });
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header showBackButton={true} />
-
       <main className="container mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6">Stock des Médicaments</h2>
 
-        {/* Statistiques */}
         <div className="mb-8">
           <MedicationStats />
         </div>
 
-        {/* Filtres */}
         <MedicationFilters
           searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          onSearchChange={handleSearchChange}
+          cip13SearchTerm={cip13SearchTerm}
+          onCip13SearchChange={handleCip13SearchChange}
           sortBy={sortBy}
           onSortChange={setSortBy}
         />
 
-        {/* Messages d'état */}
         {loading && (
           <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
           </div>
         )}
 
@@ -122,19 +150,17 @@ const MedicationsPage = () => {
           </Alert>
         )}
 
-        {/* Message si aucun résultat */}
         {filteredMedications.length === 0 && !loading && (
           <div className="text-center py-8 text-gray-500">
             Aucun médicament ne correspond à votre recherche
           </div>
         )}
 
-        {/* Grille de médicaments avec RestockProvider */}
         <RestockProvider>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredMedications.map((medication) => (
-              <MedicationCard 
-                key={medication.id} 
+              <MedicationCard
+                key={medication.id}
                 medication={medication}
                 onRestock={handleRestock}
               />
