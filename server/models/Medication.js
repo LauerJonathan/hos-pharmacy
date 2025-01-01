@@ -1,44 +1,28 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-
 const medicationSchema = new mongoose.Schema({
-  medName: {
+  medName: String,
+  form: String,
+  dose: String,
+  minimum_quantity: Number,
+  prescription_required: Boolean,
+  cip13: {
+    type: String,
+    unique: true,
+    required: true,
+  },
+  atc_code: {
     type: String,
     required: true,
-    trim: true,
   },
-  form: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  dose: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  stock_quantity: {
-    type: Number,
-    required: true,
-    trim: true,
-  },
-  minimum_quantity: {
-    type: Number,
-    required: true,
-    trim: true,
-  },
-  expiration_date: {
-    type: Date,
-    required: true,
-  },
-  prescription_required: {
-    type: Boolean,
-    required: true,
-  },
+  lots: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Lot",
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
-
 module.exports = mongoose.model("Medication", medicationSchema);
