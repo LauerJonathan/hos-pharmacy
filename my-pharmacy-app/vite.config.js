@@ -10,30 +10,33 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5173,
     proxy: {
-      "/api/medications": {
-        // Plus spécifique
+      "/api": {
         target: "http://localhost:5001",
         changeOrigin: true,
         secure: false,
+        rewrite: path => path,
         configure: (proxy, _options) => {
           proxy.on("error", (err, _req, _res) => {
-            console.log("proxy error", err);
+            console.error("Erreur proxy:", err);
           });
           proxy.on("proxyReq", (proxyReq, req, _res) => {
-            console.log("Sending Request:", req.method, req.url);
+            console.log("Requête envoyée au backend:", {
+              method: req.method,
+              path: proxyReq.path,
+              headers: req.headers
+            });
           });
           proxy.on("proxyRes", (proxyRes, req, _res) => {
-            console.log("Received Response:", proxyRes.statusCode, req.url);
+            console.log("Réponse reçue du backend:", {
+              statusCode: proxyRes.statusCode,
+              url: req.url,
+              headers: proxyRes.headers
+            });
           });
-        },
-      },
-      "/api/auth": {
-        // Ajout d'une route spécifique pour l'auth
-        target: "http://localhost:5001",
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
+        }
+      }
+    }
+  }
 });

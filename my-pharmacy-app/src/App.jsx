@@ -9,6 +9,7 @@ import AddMedicationPage from "./pages/AddMedicationPage";
 import MainLayout from "@/layouts/MainLayout";
 import "./App.css";
 import MedicationsPage from "./pages/MedicationsPage";
+import StockMedPage from "./pages/StockMedPage";
 
 const App = () => {
   return (
@@ -65,6 +66,14 @@ const App = () => {
           element={
             <ProtectedRoute roles={["pharmacien"]}>
               <MedicationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock/:cip13"
+          element={
+            <ProtectedRoute roles={["pharmacien"]}>
+              <StockMedPage />
             </ProtectedRoute>
           }
         />

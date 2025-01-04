@@ -59,7 +59,9 @@ const MedicationsPage = () => {
         if (!med.cip13) return false;
         const medCip = med.cip13.toString();
         const searchCip = cip13SearchTerm.toString().replace(/^0+/, '');
-        return medCip.includes(searchCip);
+        
+        // Modification clé : utilisation de startsWith() au lieu de includes()
+        return medCip.startsWith(searchCip);
       });
     }
 

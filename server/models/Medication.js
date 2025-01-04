@@ -12,7 +12,6 @@ const medicationSchema = new mongoose.Schema({
   },
   atc_code: {
     type: String,
-    required: true,
   },
   lots: [
     {

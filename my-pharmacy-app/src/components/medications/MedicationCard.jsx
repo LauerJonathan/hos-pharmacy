@@ -1,14 +1,22 @@
 import React from "react";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
-import { ClipboardList, Settings2 } from "lucide-react";
+import { ClipboardList, Package } from "lucide-react";
 import RestockButton from "./RestockButton";
+import { Link } from "react-router-dom";
 
 const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
-  const isLowStock = medication.stockStatus === "low";
+  // Calculer le stock total uniquement à partir des lots non expirés
+  const currentValidStock = medication.lots
+    .filter((lot) => !lot.isExpired)
+    .reduce((total, lot) => total + lot.quantity, 0);
+
+  const isLowStock = currentValidStock <= medication.minQuantity;
+
   const expiredLot = medication.lots
     .filter((lot) => lot.isExpired)
     .sort((a, b) => new Date(b.expirationDate) - new Date(a.expirationDate))[0];
+
   const nextExpirationDate =
     expiredLot?.expirationDate ||
     medication.lots
@@ -18,8 +26,8 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
       )[0]?.expirationDate;
 
   const stockRatio = Math.min(
-    (medication.currentStock /
-      Math.max(medication.minQuantity * 2, medication.currentStock)) *
+    (currentValidStock /
+      Math.max(medication.minQuantity * 2, currentValidStock)) *
       100,
     100
   );
@@ -50,12 +58,12 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
 
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-gray-500">Stock actuel</span>
+          <span className="text-gray-500">Stock valide</span>
           <span
             className={`font-semibold ${
               isLowStock ? "text-red-600" : "text-gray-900"
             }`}>
-            {medication.currentStock} unités
+            {currentValidStock} unités
           </span>
         </div>
 
@@ -95,11 +103,7 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
       </div>
 
       <div className="flex justify-center gap-4 relative">
-        <RestockButton
-          medication={medication}
-          onRestock={onRestock}
-          isLowStock={isLowStock}
-        />
+        <RestockButton medication={medication} isLowStock={isLowStock} />
 
         <Button
           onClick={() => onViewHistory(medication.id)}
@@ -110,18 +114,16 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
           <ClipboardList className="w-5 h-5" />
         </Button>
 
-        <Button
-          onClick={() => onEdit(medication.id)}
-          variant={expiredLot ? "default" : "outline"}
-          size="icon"
-          className={`w-10 h-10 transition-colors duration-200 ${
+        <Link
+          to={medication.cip13}
+          className={`inline-flex items-center justify-center rounded-md text-sm font-medium h-10 w-10 transition-colors duration-200 ${
             expiredLot
               ? "bg-orange-600 hover:bg-orange-700 text-white"
-              : "hover:bg-gray-100"
+              : "border border-input bg-background hover:bg-gray-100"
           }`}
-          title="Modifier">
-          <Settings2 className="w-5 h-5" />
-        </Button>
+          title="Gérer le stock">
+          <Package className="w-5 h-5" />
+        </Link>
       </div>
     </Card>
   );

@@ -1,31 +1,61 @@
-import React, { useState, useMemo } from 'react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Card } from '../ui/card';
-import { PlusCircle, X } from 'lucide-react';
-import { useRestock } from './RestockContext';
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Package, X, Loader2, PlusCircle } from "lucide-react";
+import { useRestock } from "./RestockContext";
+import { createMedication } from "../../store/features/medications/medicationThunks";
 
-const RestockButton = ({ medication, onRestock, isLowStock }) => {
+const RestockButton = ({ medication, isLowStock }) => {
+  const dispatch = useDispatch();
   const { openMedicationId, setOpenMedicationId } = useRestock();
-  const [currentStock, setCurrentStock] = useState(medication.currentStock);
-  const [minQuantity, setMinQuantity] = useState(medication.minQuantity);
-  
+  const [newLots, setNewLots] = useState([
+    { lotNumber: "", quantity: "", expirationDate: "" },
+  ]);
+
   const isExpanded = openMedicationId === medication.id;
 
-  // Vérifie si le nouveau stock est suffisant
-  const isNewStockSufficient = useMemo(() => {
-    return currentStock >= minQuantity;
-  }, [currentStock, minQuantity]);
+  const handleLotChange = (index, field, value) => {
+    const updatedLots = [...newLots];
+    updatedLots[index][field] = value;
+    setNewLots(updatedLots);
+  };
 
-  const handleSubmit = (e) => {
+  const addLot = () => {
+    setNewLots((prev) => [
+      ...prev,
+      { lotNumber: "", quantity: "", expirationDate: "" },
+    ]);
+  };
+
+  const removeLot = (index) => {
+    if (newLots.length > 1) {
+      setNewLots((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onRestock(medication.id, { currentStock, minQuantity });
-    setOpenMedicationId(null);
+    try {
+      const medicationUpdate = {
+        id: medication.id,
+        cip13: medication.cip13,
+        lots: newLots.map((lot) => ({
+          lotNumber: lot.lotNumber,
+          quantity: parseInt(lot.quantity),
+          expirationDate: lot.expirationDate,
+        })),
+      };
+      await dispatch(createMedication(medicationUpdate));
+      setOpenMedicationId(null);
+    } catch (error) {
+      console.error("Erreur lors de l'ajout des lots:", error);
+    }
   };
 
   const handleCancel = () => {
-    setCurrentStock(medication.currentStock);
-    setMinQuantity(medication.minQuantity);
+    setNewLots([{ lotNumber: "", quantity: "", expirationDate: "" }]);
     setOpenMedicationId(null);
   };
 
@@ -36,12 +66,11 @@ const RestockButton = ({ medication, onRestock, isLowStock }) => {
         variant={isLowStock ? "default" : "outline"}
         size="icon"
         className={`w-10 h-10 transition-colors duration-200 ${
-          isLowStock 
-            ? 'bg-red-600 hover:bg-red-700 text-white' 
-            : 'hover:bg-gray-100'
+          isLowStock
+            ? "bg-red-600 hover:bg-red-700 text-white"
+            : "hover:bg-gray-100"
         }`}
-        title="Réapprovisionner"
-      >
+        title="Réapprovisionner">
         <PlusCircle className="w-5 h-5" />
       </Button>
 
@@ -50,89 +79,91 @@ const RestockButton = ({ medication, onRestock, isLowStock }) => {
           <Card className="w-full max-w-md mx-4 p-6 bg-white">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{medication.name}</h3>
-                <p className="text-gray-500">{medication.form} - {medication.dose}</p>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  {medication.name}
+                </h3>
+                <p className="text-gray-500">
+                  {medication.form} - {medication.dose}
+                </p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-8 h-8 hover:bg-gray-100"
-                onClick={handleCancel}
-              >
+              <button
+                className="inline-flex w-8 h-8 hover:bg-gray-100 items-center justify-center"
+                onClick={handleCancel}>
                 <X className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className={`rounded-lg p-4 ${isLowStock ? 'bg-red-50' : 'bg-gray-50'}`}>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className={`text-sm ${isLowStock ? 'text-red-600 font-medium' : 'text-gray-600'}`}>
-                      Stock actuel
-                    </span>
-                    <span className={`font-medium ${isLowStock ? 'text-red-600' : 'text-gray-900'}`}>
-                      {medication.currentStock} unités
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Stock minimum</span>
-                    <span className="font-medium text-gray-900">
-                      {medication.minQuantity} unités
-                    </span>
-                  </div>
-                </div>
-              </div>
-
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Nouveau stock</label>
-                  <Input
-                    type="number"
-                    value={currentStock}
-                    onChange={(e) => setCurrentStock(Number(e.target.value))}
-                    min="0"
-                    className="w-full"
-                  />
-                </div>
-                
-                <div>
-                  <label className="text-sm text-gray-600 block mb-1">Nouveau minimum</label>
-                  <Input
-                    type="number"
-                    value={minQuantity}
-                    onChange={(e) => setMinQuantity(Number(e.target.value))}
-                    min="0"
-                    className="w-full"
-                  />
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold">Ajouter des lots</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addLot}>
+                    <Package className="h-4 w-4 mr-2" /> Ajouter un lot
+                  </Button>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm">
-                  <div className={`w-2 h-2 rounded-full ${isNewStockSufficient ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <span className={isNewStockSufficient ? 'text-green-600' : 'text-red-600'}>
-                    {isNewStockSufficient 
-                      ? 'Stock suffisant' 
-                      : 'Stock insuffisant'}
-                  </span>
-                </div>
+                {newLots.map((lot, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-3 gap-4 items-center">
+                    <Input
+                      placeholder="Numéro de lot"
+                      value={lot.lotNumber}
+                      onChange={(e) =>
+                        handleLotChange(index, "lotNumber", e.target.value)
+                      }
+                      required
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Quantité"
+                      value={lot.quantity}
+                      onChange={(e) =>
+                        handleLotChange(index, "quantity", e.target.value)
+                      }
+                      required
+                      min="0"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="date"
+                        value={lot.expirationDate}
+                        onChange={(e) =>
+                          handleLotChange(
+                            index,
+                            "expirationDate",
+                            e.target.value
+                          )
+                        }
+                        required
+                      />
+                      {newLots.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => removeLot(index)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex gap-3 pt-2">
-                <Button 
-                  type="submit" 
-                  className={`flex-1 text-white transition-colors ${
-                    isNewStockSufficient 
-                      ? 'bg-green-600 hover:bg-green-700' 
-                      : 'bg-red-600 hover:bg-red-700'
-                  }`}
-                >
+                <Button type="submit" className="flex-1">
                   Valider
                 </Button>
-                <Button 
+                <Button
                   type="button"
-                  variant="outline" 
+                  variant="outline"
                   onClick={handleCancel}
-                  className="flex-1"
-                >
+                  className="flex-1">
                   Annuler
                 </Button>
               </div>
