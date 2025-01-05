@@ -1,12 +1,17 @@
+// src/components/medications/MedicationCard.jsx
 import React from "react";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { ClipboardList, Package } from "lucide-react";
 import RestockButton from "./RestockButton";
 import { Link } from "react-router-dom";
+import { useMedication } from "../../contexts/MedicationContext";
 
-const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
-  // Calculer le stock total uniquement à partir des lots non expirés
+const MedicationCard = ({ medication, onViewHistory }) => {
+  if (!medication || !medication.lots) {
+    return null;
+  }
+
   const currentValidStock = medication.lots
     .filter((lot) => !lot.isExpired)
     .reduce((total, lot) => total + lot.quantity, 0);
@@ -104,15 +109,6 @@ const MedicationCard = ({ medication, onRestock, onViewHistory, onEdit }) => {
 
       <div className="flex justify-center gap-4 relative">
         <RestockButton medication={medication} isLowStock={isLowStock} />
-
-        <Button
-          onClick={() => onViewHistory(medication.id)}
-          variant="outline"
-          size="icon"
-          className="w-10 h-10 hover:bg-gray-100"
-          title="Voir l'historique">
-          <ClipboardList className="w-5 h-5" />
-        </Button>
 
         <Link
           to={medication.cip13}

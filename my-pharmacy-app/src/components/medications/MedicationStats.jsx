@@ -1,31 +1,39 @@
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchMedications } from "../../store/features/medications/medicationThunks";
-import { selectAllMedications } from "../../store/features/medications/medicationSlice";
+// src/components/medications/MedicationStats.jsx
+import React from "react";
+import { useMedication } from "../../contexts/MedicationContext";
 import { Card, CardContent } from "../ui/card";
 
 const MedicationStats = () => {
-  const dispatch = useDispatch();
-  const medications = useSelector(selectAllMedications);
+  const { medications, loading } = useMedication();
 
-  useEffect(() => {
-    dispatch(fetchMedications());
-  }, [dispatch]);
+  if (loading || !medications) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">...</div>
+            <p className="text-sm text-muted-foreground">Chargement...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const stats = {
     total: medications.length,
     lowStock: medications.filter((med) => med.stockStatus === "low").length,
     expiredLots: {
       count: medications.reduce(
-        (acc, med) => acc + med.lots.filter((lot) => lot.isExpired).length,
+        (acc, med) =>
+          acc + (med.lots?.filter((lot) => lot.isExpired)?.length || 0),
         0
       ),
       units: medications.reduce(
         (acc, med) =>
           acc +
-          med.lots
-            .filter((lot) => lot.isExpired)
-            .reduce((sum, lot) => sum + lot.quantity, 0),
+          (med.lots
+            ?.filter((lot) => lot.isExpired)
+            ?.reduce((sum, lot) => sum + lot.quantity, 0) || 0),
         0
       ),
     },

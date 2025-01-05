@@ -1,15 +1,14 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Package, X, Loader2, PlusCircle } from "lucide-react";
+import { Package, X, PlusCircle } from "lucide-react";
 import { useRestock } from "./RestockContext";
-import { createMedication } from "../../store/features/medications/medicationThunks";
+import { useMedication } from "../../contexts/MedicationContext";
 
 const RestockButton = ({ medication, isLowStock }) => {
-  const dispatch = useDispatch();
   const { openMedicationId, setOpenMedicationId } = useRestock();
+  const { createMedication, loading } = useMedication();
   const [newLots, setNewLots] = useState([
     { lotNumber: "", quantity: "", expirationDate: "" },
   ]);
@@ -47,8 +46,10 @@ const RestockButton = ({ medication, isLowStock }) => {
           expirationDate: lot.expirationDate,
         })),
       };
-      await dispatch(createMedication(medicationUpdate));
+      await createMedication(medicationUpdate);
       setOpenMedicationId(null);
+      // Réinitialiser le formulaire
+      setNewLots([{ lotNumber: "", quantity: "", expirationDate: "" }]);
     } catch (error) {
       console.error("Erreur lors de l'ajout des lots:", error);
     }
@@ -156,14 +157,15 @@ const RestockButton = ({ medication, isLowStock }) => {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <Button type="submit" className="flex-1">
-                  Valider
+                <Button type="submit" className="flex-1" disabled={loading}>
+                  {loading ? "Ajout en cours..." : "Valider"}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCancel}
-                  className="flex-1">
+                  className="flex-1"
+                  disabled={loading}>
                   Annuler
                 </Button>
               </div>

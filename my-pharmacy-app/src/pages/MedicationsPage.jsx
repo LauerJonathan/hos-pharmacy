@@ -1,12 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchMedications } from "../store/features/medications/medicationThunks";
-import {
-  selectAllMedications,
-  selectMedicationsLoading,
-  selectMedicationsError,
-  selectMedicationsSuccess,
-} from "../store/features/medications/medicationSlice";
+import { useMedication } from "../contexts/MedicationContext";
 import MedicationCard from "../components/medications/MedicationCard";
 import MedicationStats from "../components/medications/MedicationStats";
 import MedicationFilters from "../components/medications/MedicationFilters";
@@ -15,21 +8,19 @@ import Header from "../layouts/Header";
 import { Alert } from "../components/ui/alert";
 
 const MedicationsPage = () => {
-  const dispatch = useDispatch();
-  const medications = useSelector(selectAllMedications);
-  console.log('Medications from Redux:', medications);
-
-  const loading = useSelector(selectMedicationsLoading);
-  const error = useSelector(selectMedicationsError);
-  const success = useSelector(selectMedicationsSuccess);
+  const { medications, loading, error, success, fetchMedications } =
+    useMedication();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [cip13SearchTerm, setCip13SearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name-asc");
 
   useEffect(() => {
-    dispatch(fetchMedications());
-  }, [dispatch]);
+    const loadMedications = async () => {
+      const data = await fetchMedications();
+    };
+    loadMedications();
+  }, [fetchMedications]);
 
   const handleSearchChange = (value) => {
     setSearchTerm(value);
@@ -58,9 +49,7 @@ const MedicationsPage = () => {
       result = result.filter((med) => {
         if (!med.cip13) return false;
         const medCip = med.cip13.toString();
-        const searchCip = cip13SearchTerm.toString().replace(/^0+/, '');
-        
-        // Modification clé : utilisation de startsWith() au lieu de includes()
+        const searchCip = cip13SearchTerm.toString().replace(/^0+/, "");
         return medCip.startsWith(searchCip);
       });
     }
@@ -112,7 +101,11 @@ const MedicationsPage = () => {
   }, [medications, searchTerm, cip13SearchTerm, sortBy]);
 
   const handleRestock = (medicationId, { currentStock, minQuantity }) => {
-    console.log("Mise à jour du stock:", { medicationId, currentStock, minQuantity });
+    console.log("Mise à jour du stock:", {
+      medicationId,
+      currentStock,
+      minQuantity,
+    });
   };
 
   return (
