@@ -5,6 +5,29 @@ import { lots } from "../MOCKED/lots";
 
 const MedicationContext = createContext(null);
 
+// Fonction utilitaire pour calculer les propriétés d'un médicament
+const calculateMedicationProperties = (medication, medicationLots) => {
+  const now = new Date();
+  const validLots = medicationLots.filter(
+    (lot) =>
+      lot.medicationId === medication.id && new Date(lot.expirationDate) > now
+  );
+
+  const currentStock = validLots.reduce((sum, lot) => sum + lot.quantity, 0);
+
+  return {
+    ...medication,
+    currentStock,
+    stockStatus: currentStock <= medication.minQuantity ? "low" : "normal",
+    lots: medicationLots
+      .filter((lot) => lot.medicationId === medication.id)
+      .map((lot) => ({
+        ...lot,
+        isExpired: new Date(lot.expirationDate) < now,
+      })),
+  };
+};
+
 export const MedicationProvider = ({ children }) => {
   const [medicationsList, setMedicationsList] = useState([]);
   const [lotsList, setLotsList] = useState([]);
@@ -16,32 +39,10 @@ export const MedicationProvider = ({ children }) => {
   useEffect(() => {
     const initializeMedications = async () => {
       try {
-        const enrichedMedications = medications.map((med) => ({
-          ...med,
-          currentStock: lots
-            .filter(
-              (lot) =>
-                lot.medicationId === med.id &&
-                new Date(lot.expirationDate) > new Date()
-            )
-            .reduce((sum, lot) => sum + lot.quantity, 0),
-          stockStatus:
-            lots
-              .filter(
-                (lot) =>
-                  lot.medicationId === med.id &&
-                  new Date(lot.expirationDate) > new Date()
-              )
-              .reduce((sum, lot) => sum + lot.quantity, 0) <= med.minQuantity
-              ? "low"
-              : "normal",
-          lots: lots
-            .filter((lot) => lot.medicationId === med.id)
-            .map((lot) => ({
-              ...lot,
-              isExpired: new Date(lot.expirationDate) < new Date(),
-            })),
-        }));
+        // Enrichir les médicaments avec leurs lots et propriétés calculées
+        const enrichedMedications = medications.map((med) =>
+          calculateMedicationProperties(med, lots)
+        );
 
         setMedicationsList(enrichedMedications);
         setLotsList(lots);
@@ -55,26 +56,8 @@ export const MedicationProvider = ({ children }) => {
     initializeMedications();
   }, []);
 
-  // Fonction utilitaire pour simuler un délai d'API
   const simulateApiCall = async () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
-  };
-
-  const fetchMedications = async () => {
-    setLoading(true);
-    try {
-      await simulateApiCall();
-      const enrichedMedications = medicationsList.map((med) => ({
-        ...med,
-        lots: lotsList.filter((lot) => lot.medicationId === med.id),
-      }));
-      setLoading(false);
-      return enrichedMedications;
-    } catch (error) {
-      setError(error.message);
-      setLoading(false);
-      return [];
-    }
   };
 
   const createMedication = async (medicationData) => {
@@ -82,9 +65,8 @@ export const MedicationProvider = ({ children }) => {
     try {
       await simulateApiCall();
 
-      // Si le médicament existe déjà (cas de RestockButton)
       if (medicationData.id) {
-        // On ajoute seulement les nouveaux lots
+        // Ajout de lots à un médicament existant
         const newLots = medicationData.lots.map((lot, index) => ({
           id: String(lotsList.length + index + 1),
           lotNumber: lot.lotNumber,
@@ -94,12 +76,21 @@ export const MedicationProvider = ({ children }) => {
           receptionDate: new Date().toISOString().split("T")[0],
         }));
 
-        setLotsList([...lotsList, ...newLots]);
-        setSuccess("Lots ajoutés avec succès");
+        const updatedLotsList = [...lotsList, ...newLots];
+        setLotsList(updatedLotsList);
 
-        return getMedicationByCIP13(medicationData.cip13); // Retourne le médicament mis à jour
+        // Recalculer les propriétés de tous les médicaments
+        const updatedMedicationsList = medicationsList.map((med) =>
+          calculateMedicationProperties(med, updatedLotsList)
+        );
+        setMedicationsList(updatedMedicationsList);
+
+        setSuccess("Lots ajoutés avec succès");
+        return updatedMedicationsList.find(
+          (med) => med.id === medicationData.id
+        );
       } else {
-        // Logique existante pour un nouveau médicament
+        // Création d'un nouveau médicament
         const newMedication = {
           ...medicationData,
           id: String(medicationsList.length + 1),
@@ -114,24 +105,46 @@ export const MedicationProvider = ({ children }) => {
           receptionDate: new Date().toISOString().split("T")[0],
         }));
 
-        setMedicationsList([...medicationsList, newMedication]);
-        setLotsList([...lotsList, ...newLots]);
+        const updatedLotsList = [...lotsList, ...newLots];
+        const enrichedNewMedication = calculateMedicationProperties(
+          newMedication,
+          updatedLotsList
+        );
+
+        setMedicationsList((prev) => [...prev, enrichedNewMedication]);
+        setLotsList(updatedLotsList);
         setSuccess("Médicament créé avec succès");
+
+        return enrichedNewMedication;
       }
     } catch (error) {
-      setError(error.message);
+      setError("Erreur lors de la création/mise à jour du médicament");
+      return null;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMedications = async () => {
+    setLoading(true);
+    try {
+      await simulateApiCall();
+      const enrichedMedications = medicationsList.map((med) =>
+        calculateMedicationProperties(med, lotsList)
+      );
+      setLoading(false);
+      return enrichedMedications;
+    } catch (error) {
+      setError(error.message);
+      setLoading(false);
+      return [];
     }
   };
 
   const getMedicationByCIP13 = (cip13) => {
     const medication = medicationsList.find((med) => med.cip13 === cip13);
     if (!medication) return null;
-    return {
-      ...medication,
-      lots: lotsList.filter((lot) => lot.medicationId === medication.id),
-    };
+    return calculateMedicationProperties(medication, lotsList);
   };
 
   const updateLotQuantity = async (cip13, lotNumber, increment) => {
@@ -139,23 +152,28 @@ export const MedicationProvider = ({ children }) => {
     try {
       await simulateApiCall();
 
-      setLotsList((prevLots) =>
-        prevLots.map((lot) => {
-          if (lot.lotNumber === lotNumber) {
-            return { ...lot, quantity: lot.quantity + (increment ? 1 : -1) };
-          }
-          return lot;
-        })
-      );
+      const updatedLotsList = lotsList.map((lot) => {
+        if (lot.lotNumber === lotNumber) {
+          return { ...lot, quantity: lot.quantity + (increment ? 1 : -1) };
+        }
+        return lot;
+      });
 
-      const updatedMedication = getMedicationByCIP13(cip13);
+      setLotsList(updatedLotsList);
+
+      // Recalculer les propriétés de tous les médicaments
+      const updatedMedicationsList = medicationsList.map((med) =>
+        calculateMedicationProperties(med, updatedLotsList)
+      );
+      setMedicationsList(updatedMedicationsList);
+
       setSuccess("Quantité mise à jour avec succès");
-      setLoading(false);
-      return updatedMedication;
+      return updatedMedicationsList.find((med) => med.cip13 === cip13);
     } catch (error) {
       setError("Erreur lors de la mise à jour de la quantité");
-      setLoading(false);
       return null;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -164,18 +182,24 @@ export const MedicationProvider = ({ children }) => {
     try {
       await simulateApiCall();
 
-      setLotsList((prevLots) =>
-        prevLots.filter((lot) => lot.lotNumber !== lotNumber)
+      const updatedLotsList = lotsList.filter(
+        (lot) => lot.lotNumber !== lotNumber
       );
+      setLotsList(updatedLotsList);
 
-      const updatedMedication = getMedicationByCIP13(cip13);
+      // Recalculer les propriétés de tous les médicaments
+      const updatedMedicationsList = medicationsList.map((med) =>
+        calculateMedicationProperties(med, updatedLotsList)
+      );
+      setMedicationsList(updatedMedicationsList);
+
       setSuccess("Lot supprimé avec succès");
-      setLoading(false);
-      return updatedMedication;
+      return updatedMedicationsList.find((med) => med.cip13 === cip13);
     } catch (error) {
       setError("Erreur lors de la suppression du lot");
-      setLoading(false);
       return null;
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -1,18 +1,11 @@
-import React, { useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchMedications } from "../../store/features/medications/medicationThunks";
-import { selectAllMedications } from "../../store/features/medications/medicationSlice";
+import React from "react";
+import { useMedication } from "../../contexts/MedicationContext";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Bell, PackageOpen, AlertTriangle, Calendar } from "lucide-react";
 
 const MedicationAlerts = () => {
-  const dispatch = useDispatch();
-  const medications = useSelector(selectAllMedications);
-
-  useEffect(() => {
-    dispatch(fetchMedications());
-  }, [dispatch]);
+  const { medications } = useMedication();
 
   const threeMonthsFromNow = new Date();
   threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
@@ -23,13 +16,13 @@ const MedicationAlerts = () => {
       return med.lots.some((lot) => {
         const expirationDate = new Date(lot.expirationDate);
         return (
-          expirationDate <= threeMonthsFromNow && expirationDate > new Date()
+          !lot.isExpired &&
+          expirationDate <= threeMonthsFromNow &&
+          expirationDate > new Date()
         );
       });
     }),
-    expired: medications.filter((med) =>
-      med.lots.some((lot) => new Date(lot.expirationDate) < new Date())
-    ),
+    expired: medications.filter((med) => med.lots.some((lot) => lot.isExpired)),
   };
 
   if (
@@ -67,7 +60,9 @@ const MedicationAlerts = () => {
     const expiringLots = med.lots.filter((lot) => {
       const expirationDate = new Date(lot.expirationDate);
       return (
-        expirationDate <= threeMonthsFromNow && expirationDate > new Date()
+        !lot.isExpired &&
+        expirationDate <= threeMonthsFromNow &&
+        expirationDate > new Date()
       );
     });
     const totalUnits = expiringLots.reduce((sum, lot) => sum + lot.quantity, 0);
@@ -75,9 +70,7 @@ const MedicationAlerts = () => {
   };
 
   const getExpiredLotsInfo = (med) => {
-    const expiredLots = med.lots.filter(
-      (lot) => new Date(lot.expirationDate) < new Date()
-    );
+    const expiredLots = med.lots.filter((lot) => lot.isExpired);
     const totalUnits = expiredLots.reduce((sum, lot) => sum + lot.quantity, 0);
     return { count: expiredLots.length, units: totalUnits };
   };

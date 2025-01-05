@@ -1,52 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
 import { Trash2, Plus, Minus, AlertTriangle } from "lucide-react";
-import {
-  selectMedicationByCIP13,
-  selectStockStatus,
-  selectMedicationsLoading,
-  selectMedicationsError,
-  selectMedicationsSuccess,
-} from "../store/features/medications/medicationSlice";
-import {
-  searchMedicationByCIP13,
-  updateLotQuantity,
-  deleteLot,
-} from "../store/features/medications/medicationThunks";
-
+import { useMedication } from "../contexts/MedicationContext";
 import Header from "../layouts/Header";
 import { RestockProvider } from "../components/medications/RestockContext";
 import RestockButton from "../components/medications/RestockButton";
 
 const StockMedPage = () => {
   const { cip13 } = useParams();
-  const dispatch = useDispatch();
   const [lotToDelete, setLotToDelete] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  const medication = useSelector((state) =>
-    selectMedicationByCIP13(state, cip13)
-  );
-  const stockStatus = useSelector((state) => selectStockStatus(state, cip13));
-  const loading = useSelector(selectMedicationsLoading);
-  const error = useSelector(selectMedicationsError);
-  const success = useSelector(selectMedicationsSuccess);
-  const isLowStock = true;
+  const {
+    getMedicationByCIP13,
+    updateLotQuantity,
+    deleteLot,
+    loading,
+    error,
+    success,
+  } = useMedication();
 
-  useEffect(() => {
-    if (cip13) {
-      dispatch(searchMedicationByCIP13(cip13));
-    }
-  }, [cip13, dispatch]);
+  const medication = getMedicationByCIP13(cip13);
 
-  const handleUpdateQuantity = (lotNumber, increment) => {
-    dispatch(updateLotQuantity(cip13, lotNumber, increment));
+  const isLowStock = medication?.currentStock <= medication?.minQuantity;
+
+  const handleUpdateQuantity = async (lotNumber, increment) => {
+    await updateLotQuantity(cip13, lotNumber, increment);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (lotToDelete) {
-      dispatch(deleteLot(cip13, lotToDelete));
+      await deleteLot(cip13, lotToDelete);
       setLotToDelete(null);
       setShowModal(false);
     }
@@ -124,7 +108,7 @@ const StockMedPage = () => {
                 </h2>
                 <span
                   className={`px-3 py-1 rounded-full text-sm ${getStockStatusColor(
-                    stockStatus?.status
+                    medication.stockStatus
                   )}`}>
                   Stock: {medication.currentStock}
                 </span>
@@ -136,11 +120,11 @@ const StockMedPage = () => {
           </div>
 
           <div className="p-6">
-            {stockStatus?.isLow && (
+            {isLowStock && (
               <div className="mb-4 p-4 bg-yellow-50 border border-yellow-400 rounded-lg">
                 <p className="text-yellow-700">
                   Stock faible ! Quantité actuelle sous le minimum requis (
-                  {stockStatus.minQuantity})
+                  {medication.minQuantity})
                 </p>
               </div>
             )}
@@ -212,11 +196,13 @@ const StockMedPage = () => {
                             medication={medication}
                             isLowStock={isLowStock}
                           />
-                          <button
-                            className="p-2 rounded bg-red-50 hover:bg-red-100 text-red-600"
-                            onClick={() => openDeleteModal(lot.lotNumber)}>
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {lot.isExpired && (
+                            <button
+                              className="p-2 rounded bg-red-50 hover:bg-red-100 text-red-600"
+                              onClick={() => openDeleteModal(lot.lotNumber)}>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -227,7 +213,6 @@ const StockMedPage = () => {
           </div>
         </div>
 
-        {/* Modal de confirmation de suppression */}
         {showModal && (
           <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"

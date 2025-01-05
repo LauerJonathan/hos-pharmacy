@@ -17,24 +17,19 @@ const DashboardPage = () => {
       {/* Carte de bienvenue et actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Bienvenue, {user.firstName} !</CardTitle>
+          <CardTitle>Bienvenue, Jonathan !</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-4">
-            Vous êtes connecté en tant que {user?.role}.
+            Vous êtes connecté en tant que pharmacien.
           </p>
-          {user.role === "pharmacien" && (
+          {"pharmacien" === "pharmacien" && (
             <div className="space-y-6">
               <div className="flex flex-wrap gap-4">
-                <Button
-                  onClick={() => navigate("/add-medication")}
-                >
+                <Button onClick={() => navigate("/add-medication")}>
                   Ajouter un médicament
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/stock")}
-                >
+                <Button variant="outline" onClick={() => navigate("/stock")}>
                   Voir tous les médicaments
                 </Button>
               </div>
@@ -43,7 +38,7 @@ const DashboardPage = () => {
         </CardContent>
       </Card>
 
-      {user.role === "pharmacien" && (
+      {"pharmacien" === "pharmacien" && (
         <>
           {/* Section Alertes */}
           <div className="grid gap-6 lg:grid-cols-2">

@@ -1,16 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  createMedication,
-  searchMedicationByCIP13,
-} from "../../store/features/medications/medicationThunks";
-import {
-  resetStatus,
-  selectSearchedMedication,
-  selectMedicationsLoading,
-  selectMedicationsError,
-} from "../../store/features/medications/medicationSlice";
+import { useMedication } from "../../contexts/MedicationContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { Search, Loader2, Package, X, AlertCircle } from "lucide-react";
 
-// État initial du formulaire
 const initialFormState = {
   name: "",
   form: "comprime",
@@ -37,84 +26,46 @@ const initialFormState = {
 };
 
 const MedicationForm = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { createMedication, getMedicationByCIP13, loading, error, success } =
+    useMedication();
 
-  // Selectors
-  const searchedMedication = useSelector(selectSearchedMedication);
-  const loading = useSelector(selectMedicationsLoading);
-  const apiError = useSelector(selectMedicationsError);
-
-  // State local pour le formulaire
+  // États locaux
   const [formData, setFormData] = useState(initialFormState);
   const [cip13SearchTerm, setCip13SearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchAttempted, setSearchAttempted] = useState(false);
+  const [searchedMedication, setSearchedMedication] = useState(null);
 
-  // Nettoyage au démontage
-  useEffect(() => {
-    return () => {
-      dispatch(resetStatus());
-    };
-  }, [dispatch]);
-
-  // Gestion du pré-remplissage si médicament trouvé
-  useEffect(() => {
-    if (searchedMedication) {
-      if (searchedMedication.notFound) {
-        // Médicament non trouvé : pré-remplir avec le CIP13
-        setFormData((prev) => ({
-          ...prev,
-          cip13: searchedMedication.cip13,
-          name: "",
-          form: "comprime",
-          dose: "",
-          currentStock: "",
-          minQuantity: "",
-          prescriptionRequired: false,
-          lots: [{ lotNumber: "", quantity: "", expirationDate: "" }],
-        }));
-      } else {
-        // Médicament trouvé : pré-remplir avec ses informations
-        setFormData({
-          name: searchedMedication.name || "",
-          form: searchedMedication.form || "comprime",
-          dose: searchedMedication.dose || "",
-          currentStock: searchedMedication.currentStock || "",
-          minQuantity: searchedMedication.minQuantity || "",
-          cip13: searchedMedication.cip13 || cip13SearchTerm,
-          prescriptionRequired:
-            searchedMedication.prescriptionRequired || false,
-          lots: searchedMedication.lots?.length
-            ? searchedMedication.lots.map((lot) => ({
-                lotNumber: lot.lotNumber || "",
-                quantity: lot.quantity || "",
-                expirationDate: lot.expirationDate
-                  ? lot.expirationDate.split("T")[0]
-                  : "",
-              }))
-            : [{ lotNumber: "", quantity: "", expirationDate: "" }],
-        });
-      }
-      setIsSearching(false);
-      setSearchAttempted(true);
-    }
-  }, [searchedMedication, cip13SearchTerm]);
-
-  // Fonction de recherche CIP13
-  const handleCip13Search = useCallback(async () => {
+  // Gestion de la recherche CIP13
+  const handleCip13Search = async () => {
     if (cip13SearchTerm.trim()) {
       setIsSearching(true);
       setSearchAttempted(true);
-      try {
-        await dispatch(searchMedicationByCIP13(cip13SearchTerm.trim()));
-      } catch (error) {
-        setSearchAttempted(false);
-      } finally {
-        setIsSearching(false);
+      const medication = await getMedicationByCIP13(cip13SearchTerm.trim());
+      if (medication) {
+        setSearchedMedication(medication);
+        // Pré-remplir le formulaire avec les données existantes
+        setFormData({
+          name: medication.name || "",
+          form: medication.form || "comprime",
+          dose: medication.dose || "",
+          currentStock: medication.currentStock || "",
+          minQuantity: medication.minQuantity || "",
+          cip13: medication.cip13 || cip13SearchTerm,
+          prescriptionRequired: medication.prescriptionRequired || false,
+          lots: [{ lotNumber: "", quantity: "", expirationDate: "" }],
+        });
+      } else {
+        setSearchedMedication(null);
+        setFormData({
+          ...initialFormState,
+          cip13: cip13SearchTerm,
+        });
       }
+      setIsSearching(false);
     }
-  }, [dispatch, cip13SearchTerm]);
+  };
 
   // Gestion des changements de formulaire
   const handleInputChange = (e) => {
@@ -153,12 +104,16 @@ const MedicationForm = () => {
     setCip13SearchTerm("");
     setFormData(initialFormState);
     setSearchAttempted(false);
+    setSearchedMedication(null);
   };
 
   // Soumission du formulaire
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(createMedication(formData));
+    const result = await createMedication(formData);
+    if (result) {
+      navigate("/stock");
+    }
   };
 
   return (
@@ -205,7 +160,7 @@ const MedicationForm = () => {
             </Button>
           </div>
 
-          {/* Indication de recherche */}
+          {/* Messages d'indication/erreur */}
           {searchAttempted && !searchedMedication && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4 mr-2" />
@@ -216,14 +171,19 @@ const MedicationForm = () => {
             </Alert>
           )}
 
-          {/* Messages d'erreur */}
-          {apiError && (
+          {error && (
             <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{apiError}</AlertDescription>
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          {/* Champs principaux */}
+          {success && (
+            <Alert className="mb-4">
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Reste du formulaire identique */}
           <div className="grid grid-cols-2 gap-4">
             <Input
               name="name"
@@ -270,15 +230,6 @@ const MedicationForm = () => {
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
-              name="currentStock"
-              placeholder="Stock actuel"
-              value={formData.currentStock}
-              onChange={handleInputChange}
-              required
-              min="0"
-            />
-            <Input
-              type="number"
               name="minQuantity"
               placeholder="Stock minimal"
               value={formData.minQuantity}
@@ -286,6 +237,21 @@ const MedicationForm = () => {
               required
               min="0"
             />
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="prescriptionRequired"
+                name="prescriptionRequired"
+                checked={formData.prescriptionRequired}
+                onChange={handleInputChange}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <label
+                htmlFor="prescriptionRequired"
+                className="text-sm font-medium">
+                Ordonnance requise
+              </label>
+            </div>
           </div>
 
           {/* Gestion des lots */}
@@ -324,7 +290,6 @@ const MedicationForm = () => {
                 <div className="flex items-center space-x-2">
                   <Input
                     type="date"
-                    placeholder="Date d'expiration"
                     value={lot.expirationDate}
                     onChange={(e) =>
                       handleLotChange(index, "expirationDate", e.target.value)
@@ -345,23 +310,6 @@ const MedicationForm = () => {
             ))}
           </div>
 
-          {/* Checkbox Ordonnance */}
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="prescriptionRequired"
-              name="prescriptionRequired"
-              checked={formData.prescriptionRequired}
-              onChange={handleInputChange}
-              className="h-4 w-4 rounded border-gray-300"
-            />
-            <label
-              htmlFor="prescriptionRequired"
-              className="text-sm font-medium">
-              Ordonnance requise
-            </label>
-          </div>
-
           {/* Boutons de soumission */}
           <div className="grid grid-cols-2 gap-4">
             <Button type="submit" disabled={loading} className="w-full">
@@ -374,7 +322,7 @@ const MedicationForm = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/stock")}
               disabled={loading}
               className="w-full">
               Annuler

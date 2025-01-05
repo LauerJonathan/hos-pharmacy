@@ -10,8 +10,8 @@ import { login } from "@/store/features/auth/authThunks";
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: "pharmacien@test.fr",
+    password: "123456",
   });
 
   const dispatch = useDispatch();
