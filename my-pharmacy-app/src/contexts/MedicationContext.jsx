@@ -71,54 +71,66 @@ export const MedicationProvider = ({ children }) => {
           id: String(lotsList.length + index + 1),
           lotNumber: lot.lotNumber,
           medicationId: medicationData.id,
-          quantity: lot.quantity,
+          quantity: parseInt(lot.quantity),
           expirationDate: lot.expirationDate,
           receptionDate: new Date().toISOString().split("T")[0],
+          isExpired: new Date(lot.expirationDate) < new Date(),
         }));
 
         const updatedLotsList = [...lotsList, ...newLots];
         setLotsList(updatedLotsList);
 
         // Recalculer les propriétés de tous les médicaments
-        const updatedMedicationsList = medicationsList.map((med) =>
-          calculateMedicationProperties(med, updatedLotsList)
-        );
-        setMedicationsList(updatedMedicationsList);
+        const updatedMedicationsList = medicationsList.map((med) => {
+          if (med.id === medicationData.id) {
+            return calculateMedicationProperties(med, updatedLotsList);
+          }
+          return med;
+        });
 
+        setMedicationsList(updatedMedicationsList);
         setSuccess("Lots ajoutés avec succès");
         return updatedMedicationsList.find(
           (med) => med.id === medicationData.id
         );
       } else {
         // Création d'un nouveau médicament
-        const newMedication = {
-          ...medicationData,
-          id: String(medicationsList.length + 1),
-        };
-
+        const newMedicationId = String(medicationsList.length + 1);
         const newLots = medicationData.lots.map((lot, index) => ({
           id: String(lotsList.length + index + 1),
           lotNumber: lot.lotNumber,
-          medicationId: newMedication.id,
-          quantity: lot.quantity,
+          medicationId: newMedicationId,
+          quantity: parseInt(lot.quantity),
           expirationDate: lot.expirationDate,
           receptionDate: new Date().toISOString().split("T")[0],
+          isExpired: new Date(lot.expirationDate) < new Date(),
         }));
 
-        const updatedLotsList = [...lotsList, ...newLots];
+        const newMedication = {
+          id: newMedicationId,
+          name: medicationData.name,
+          form: medicationData.form,
+          dose: medicationData.dose,
+          minQuantity: parseInt(medicationData.minQuantity),
+          prescriptionRequired: medicationData.prescriptionRequired,
+          cip13: medicationData.cip13,
+        };
+
+        // Enrichir le nouveau médicament avec les propriétés calculées
         const enrichedNewMedication = calculateMedicationProperties(
           newMedication,
-          updatedLotsList
+          newLots
         );
 
+        // Mettre à jour les deux listes
         setMedicationsList((prev) => [...prev, enrichedNewMedication]);
-        setLotsList(updatedLotsList);
-        setSuccess("Médicament créé avec succès");
+        setLotsList((prev) => [...prev, ...newLots]);
 
+        setSuccess("Médicament créé avec succès");
         return enrichedNewMedication;
       }
     } catch (error) {
-      setError("Erreur lors de la création/mise à jour du médicament");
+      setError("Erreur lors de la création du médicament");
       return null;
     } finally {
       setLoading(false);

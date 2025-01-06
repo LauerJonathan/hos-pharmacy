@@ -4,16 +4,12 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { ChevronLeft } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 const Header = ({ showBackButton = false }) => {
-  const { user } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    // Logique de déconnexion à implémenter
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  const navigate = useNavigate();
 
   return (
     <div className="w-full border-b">
@@ -40,12 +36,10 @@ const Header = ({ showBackButton = false }) => {
           {/* Partie droite avec infos utilisateur et déconnexion */}
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="font-medium">
-                {user.firstName} {user.lastName}
-              </p>
-              <p className="text-sm text-muted-foreground">{user.role}</p>
+              <p className="font-medium">Dr. Smith</p>
+              <p className="text-sm text-muted-foreground">pharmacien</p>
             </div>
-            <Button variant="outline" onClick={handleLogout}>
+            <Button variant="outline" onClick={logout}>
               Déconnexion
             </Button>
           </div>

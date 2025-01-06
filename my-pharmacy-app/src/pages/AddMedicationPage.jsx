@@ -1,10 +1,14 @@
 import MedicationForm from "../components/medications/MedicationForm";
+import Header from "../layouts/Header";
 
 const AddMedicationPage = () => {
   return (
-    <div className="container mx-auto py-8">
-      <MedicationForm />
-    </div>
+    <>
+      <Header showBackButton={true} />
+      <div className="container mx-auto py-8">
+        <MedicationForm />
+      </div>
+    </>
   );
 };
 

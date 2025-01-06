@@ -44,7 +44,7 @@ const MedicationStats = () => {
       <Card>
         <CardContent className="pt-6">
           <div className="text-2xl font-bold">{stats.total}</div>
-          <p className="text-sm text-muted-foreground">Total Médicaments</p>
+          <p className="text-sm text-muted-foreground">Références</p>
         </CardContent>
       </Card>
 

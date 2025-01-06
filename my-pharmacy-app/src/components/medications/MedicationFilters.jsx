@@ -18,7 +18,6 @@ const MedicationFilters = ({
 }) => {
   const handleCip13Change = (e) => {
     const value = e.target.value;
-    console.log("CIP13 Input:", value);
     if (value === "" || /^\d*$/.test(value)) {
       onCip13SearchChange(value);
     }

@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Lock, Loader2 } from "lucide-react";
-import { login } from "@/store/features/auth/authThunks";
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
     email: "pharmacien@test.fr",
     password: "123456",
   });
+  const [error, setError] = useState(null);
 
-  const dispatch = useDispatch();
+  const { login, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated } = useSelector((state) => {
-    return state.auth;
-  });
+
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/dashboard");
@@ -35,7 +33,10 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await dispatch(login(formData));
+    const success = login(formData.email, formData.password);
+    if (!success) {
+      setError("Identifiants incorrects");
+    }
   };
 
   return (
@@ -68,13 +69,14 @@ const LoginForm = () => {
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <Input
-                    type="email"
+                    type="text"
                     name="email"
-                    placeholder="Email"
+                    placeholder="Identifiant"
                     value={formData.email}
                     onChange={handleChange}
                     className="pl-10"
                     required
+                    autoComplete="username"
                   />
                 </div>
 
@@ -88,6 +90,7 @@ const LoginForm = () => {
                     onChange={handleChange}
                     className="pl-10"
                     required
+                    autoComplete="current-password"
                   />
                 </div>
               </div>
