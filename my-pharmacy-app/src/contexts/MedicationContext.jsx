@@ -57,14 +57,12 @@ export const MedicationProvider = ({ children }) => {
   }, []);
 
   const simulateApiCall = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   };
 
   const createMedication = async (medicationData) => {
     setLoading(true);
     try {
-      await simulateApiCall();
-
       if (medicationData.id) {
         // Ajout de lots à un médicament existant
         const newLots = medicationData.lots.map((lot, index) => ({
@@ -140,7 +138,6 @@ export const MedicationProvider = ({ children }) => {
   const fetchMedications = async () => {
     setLoading(true);
     try {
-      await simulateApiCall();
       const enrichedMedications = medicationsList.map((med) =>
         calculateMedicationProperties(med, lotsList)
       );
@@ -162,8 +159,6 @@ export const MedicationProvider = ({ children }) => {
   const updateLotQuantity = async (cip13, lotNumber, increment) => {
     setLoading(true);
     try {
-      await simulateApiCall();
-
       const updatedLotsList = lotsList.map((lot) => {
         if (lot.lotNumber === lotNumber) {
           return { ...lot, quantity: lot.quantity + (increment ? 1 : -1) };
@@ -192,8 +187,6 @@ export const MedicationProvider = ({ children }) => {
   const deleteLot = async (cip13, lotNumber) => {
     setLoading(true);
     try {
-      await simulateApiCall();
-
       const updatedLotsList = lotsList.filter(
         (lot) => lot.lotNumber !== lotNumber
       );
