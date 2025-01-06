@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 export default defineConfig({
+  base: '/hosPharmacie/',  // Le chemin de base pour ton application
   plugins: [react()],
   resolve: {
     alias: {

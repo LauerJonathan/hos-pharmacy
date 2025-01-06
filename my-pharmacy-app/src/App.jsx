@@ -15,7 +15,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 
 const App = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/hosPharmacie/">
       <AuthProvider>
         <MedicationProvider>
           <Routes>
